@@ -308,8 +308,10 @@ bool zmq::zmtp_engine_t::handshake_v2_0 ()
     _encoder = new (std::nothrow) v2_encoder_t (_options.out_batch_size);
     alloc_assert (_encoder);
 
-    _decoder = new (std::nothrow) v2_decoder_t (
-      _options.in_batch_size, _options.maxmsgsize, _options.zero_copy);
+    _decoder = new (std::nothrow) v2_decoder_t (_options.in_batch_size, _options.maxmsgsize, _options.zero_copy,_options.use_recv_memory_pool);
+    
+
+
     alloc_assert (_decoder);
 
     return true;
@@ -383,7 +385,7 @@ bool zmq::zmtp_engine_t::handshake_v3_0 ()
     alloc_assert (_encoder);
 
     _decoder = new (std::nothrow) v2_decoder_t (
-      _options.in_batch_size, _options.maxmsgsize, _options.zero_copy);
+      _options.in_batch_size, _options.maxmsgsize, _options.zero_copy,_options.use_recv_memory_pool);
     alloc_assert (_decoder);
 
     return zmq::zmtp_engine_t::handshake_v3_x (true);
@@ -395,7 +397,7 @@ bool zmq::zmtp_engine_t::handshake_v3_1 ()
     alloc_assert (_encoder);
 
     _decoder = new (std::nothrow) v2_decoder_t (
-      _options.in_batch_size, _options.maxmsgsize, _options.zero_copy);
+      _options.in_batch_size, _options.maxmsgsize, _options.zero_copy,_options.use_recv_memory_pool);
     alloc_assert (_decoder);
 
     return zmq::zmtp_engine_t::handshake_v3_x (false);

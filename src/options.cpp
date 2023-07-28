@@ -4,6 +4,7 @@
 #include <string.h>
 #include <limits.h>
 #include <set>
+#include <iostream>
 
 #include "options.hpp"
 #include "err.hpp"
@@ -219,6 +220,7 @@ zmq::options_t::options_t () :
     loopback_fastpath (false),
     multicast_loop (true),
     in_batch_size (8192),
+    use_recv_memory_pool(false), //in bactch size will be given by memory pool
     out_batch_size (8192),
     zero_copy (true),
     router_notify (0),
@@ -302,6 +304,8 @@ int zmq::options_t::setsockopt (int option_,
 #if defined(ZMQ_ACT_MILITANT)
     bool malformed = true; //  Did caller pass a bad option value?
 #endif
+
+    std::cout<<"setting option"<<optval_<<" "<<optvallen_<<std::endl;
 
     switch (option_) {
         case ZMQ_SNDHWM:
@@ -771,13 +775,24 @@ int zmq::options_t::setsockopt (int option_,
             return do_setsockopt_int_as_bool_relaxed (optval_, optvallen_,
                                                       &multicast_loop);
 
+        case ZMQ_USE_RECV_MEMORY_POOL:
+            if (is_int) {
+                std::cout<<"setting recv mem"<<value;
+                use_recv_memory_pool = value>0;
+                return 0;
+            }
+            break;
+
 #ifdef ZMQ_BUILD_DRAFT_API
+
         case ZMQ_IN_BATCH_SIZE:
             if (is_int && value > 0) {
                 in_batch_size = value;
                 return 0;
             }
             break;
+
+
 
         case ZMQ_OUT_BATCH_SIZE:
             if (is_int && value > 0) {

@@ -13,8 +13,8 @@
 
 zmq::v2_decoder_t::v2_decoder_t (size_t bufsize_,
                                  int64_t maxmsgsize_,
-                                 bool zero_copy_) :
-    decoder_base_t<v2_decoder_t, shared_message_memory_allocator> (bufsize_),
+                                 bool zero_copy_, bool use_memory_pool) :
+    decoder_base_t<v2_decoder_t, shared_message_memory_allocator> (bufsize_,use_memory_pool),
     _msg_flags (0),
     _zero_copy (zero_copy_),
     _max_msg_size (maxmsgsize_)

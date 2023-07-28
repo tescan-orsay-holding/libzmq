@@ -25,6 +25,7 @@ include(CMakePackageConfigHelpers)
 list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}")
 set(ZMQ_CMAKE_MODULES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/builds/cmake/Modules)
 list(APPEND CMAKE_MODULE_PATH ${ZMQ_CMAKE_MODULES_DIR})
+# list(APPEND CMAKE_PREFIX_PATH ${ZMQ_CMAKE_MODULES_DIR})
 
 include(TestZMQVersion)
 include(ZMQSourceRunChecks)
@@ -961,6 +962,7 @@ set(cxx-sources
     reaper.cpp
     rep.cpp
     req.cpp
+    reusable_memory_pool.cpp
     router.cpp
     select.cpp
     server.cpp
@@ -1094,6 +1096,7 @@ set(cxx-sources
     reaper.hpp
     rep.hpp
     req.hpp
+    reusable_memory_pool.hpp
     router.hpp
     scatter.hpp
     secure_allocator.hpp

@@ -249,6 +249,11 @@ struct options_t
     //  them may be read by a single 'recv' system call, thus avoiding
     //  unnecessary network stack traversals.
     int in_batch_size;
+
+    // eperimental memory pool for optimizing the problematic malloc/free cycle at higher speed/memory consumption, 
+    // instead allocating/deallocating of messages it will reuse incoming buffers
+    // set up the memory_pool buffer size to your expected maximum messages (it will be used insted of in_batch_sie);
+    bool use_recv_memory_pool;
     //  Maximal batching size for engines with sending functionality.
     //  So, if there are 10 messages that fit into the batch size, all of
     //  them may be written by a single 'send' system call, thus avoiding

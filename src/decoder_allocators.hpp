@@ -10,8 +10,13 @@
 #include "msg.hpp"
 #include "err.hpp"
 
+
+
 namespace zmq
 {
+
+
+
 // Static buffer policy.
 class c_single_allocator
 {
@@ -54,10 +59,14 @@ class shared_message_memory_allocator
 {
   public:
     explicit shared_message_memory_allocator (std::size_t bufsize_);
+    
 
     // Create an allocator for a maximum number of messages
     shared_message_memory_allocator (std::size_t bufsize_,
                                      std::size_t max_messages_);
+
+    explicit shared_message_memory_allocator (std::size_t bufsize_,std::size_t max_messages_, bool use_memory_pool);
+
 
     ~shared_message_memory_allocator ();
 
@@ -90,17 +99,21 @@ class shared_message_memory_allocator
 
     zmq::msg_t::content_t *provide_content () { return _msg_content; }
 
-    void advance_content () { _msg_content++; }
+    void advance_content ();
 
   private:
     void clear ();
 
     unsigned char *_buf;
     std::size_t _buf_size;
-    const std::size_t _max_size;
+    std::size_t _max_size;
+    std::size_t _use_memory_pool=false;
     zmq::msg_t::content_t *_msg_content;
     std::size_t _max_counters;
 };
+
+
+
 }
 
 #endif

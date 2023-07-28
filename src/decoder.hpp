@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstring>
+#include <iostream>
 
 #include "decoder_allocators.hpp"
 #include "err.hpp"
@@ -32,6 +33,11 @@ class decoder_base_t : public i_decoder
   public:
     explicit decoder_base_t (const size_t buf_size_) :
         _next (NULL), _read_pos (NULL), _to_read (0), _allocator (buf_size_)
+    {
+        _buf = _allocator.allocate ();
+    }
+    explicit decoder_base_t (const size_t buf_size_,const bool use_memory_pool) :
+        _next (NULL), _read_pos (NULL), _to_read (0), _allocator (buf_size_,1,use_memory_pool)
     {
         _buf = _allocator.allocate ();
     }
@@ -72,6 +78,12 @@ class decoder_base_t : public i_decoder
                 std::size_t &bytes_used_) ZMQ_FINAL
     {
         bytes_used_ = 0;
+        std::cout<<"decoding: "<<size_<<std::endl;
+        for(int i=0;i<size_;i++){
+            std::cout<<*(data_+i)<<std::endl;
+        }
+        std::cout<<"| "<<size_<<std::endl;
+            
 
         //  In case of zero-copy simply adjust the pointers, no copying
         //  is required. Also, run the state machine in case all the data
