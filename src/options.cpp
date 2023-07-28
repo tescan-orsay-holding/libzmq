@@ -220,7 +220,8 @@ zmq::options_t::options_t () :
     loopback_fastpath (false),
     multicast_loop (true),
     in_batch_size (8192),
-    use_recv_memory_pool(false), //in bactch size will be given by memory pool
+    use_recv_memory_pool (true), //in batcch size will be given by memory pool
+    max_messages (100), //used for memory pool
     out_batch_size (8192),
     zero_copy (true),
     router_notify (0),
@@ -783,6 +784,13 @@ int zmq::options_t::setsockopt (int option_,
             }
             break;
 
+        case ZMQ_MAX_MESSAGES:
+            if (is_int) {
+                max_messages = value;
+                return 0;
+            }
+            break;
+
 #ifdef ZMQ_BUILD_DRAFT_API
 
         case ZMQ_IN_BATCH_SIZE:
@@ -1322,6 +1330,20 @@ int zmq::options_t::getsockopt (int option_,
         case ZMQ_MULTICAST_LOOP:
             if (is_int) {
                 *value = multicast_loop;
+                return 0;
+            }
+            break;
+
+        case ZMQ_USE_RECV_MEMORY_POOL:
+            if (is_int) {
+                *value=use_recv_memory_pool;
+                return 0;
+            }
+            break;
+
+        case ZMQ_MAX_MESSAGES:
+            if (is_int) {
+                *value=max_messages;
                 return 0;
             }
             break;

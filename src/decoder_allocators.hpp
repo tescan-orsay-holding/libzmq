@@ -95,11 +95,14 @@ class shared_message_memory_allocator
     // Return pointer to the first byte of the buffer.
     unsigned char *buffer () { return _buf; }
 
-    void resize (std::size_t new_size_) { _buf_size = new_size_; }
+    void resize (std::size_t new_size_);
 
     zmq::msg_t::content_t *provide_content () { return _msg_content; }
 
+    // void advance_content (size_t end_of_message);
     void advance_content ();
+
+    size_t use_memory_pool(){return _use_memory_pool;};
 
   private:
     void clear ();
@@ -110,6 +113,7 @@ class shared_message_memory_allocator
     std::size_t _use_memory_pool=false;
     zmq::msg_t::content_t *_msg_content;
     std::size_t _max_counters;
+    std::size_t msg_counter=0;
 };
 
 

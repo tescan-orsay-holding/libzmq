@@ -8,6 +8,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <new>
+#include <iostream>
 
 #include "stdint.hpp"
 #include "likely.hpp"
@@ -262,6 +263,7 @@ int zmq::msg_t::close ()
             free (_u.lmsg.content);
         }
     }
+
 
     if (is_zcmsg ()) {
         zmq_assert (_u.zclmsg.content->ffn);

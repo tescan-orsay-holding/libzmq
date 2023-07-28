@@ -254,6 +254,8 @@ struct options_t
     // instead allocating/deallocating of messages it will reuse incoming buffers
     // set up the memory_pool buffer size to your expected maximum messages (it will be used insted of in_batch_sie);
     bool use_recv_memory_pool;
+    int max_messages;//max messages send together by tcp
+
     //  Maximal batching size for engines with sending functionality.
     //  So, if there are 10 messages that fit into the batch size, all of
     //  them may be written by a single 'send' system call, thus avoiding

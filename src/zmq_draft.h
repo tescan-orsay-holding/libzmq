@@ -55,6 +55,7 @@
 #define ZMQ_NORM_NUM_AUTOPARITY 123
 #define ZMQ_NORM_PUSH 124
 #define ZMQ_USE_RECV_MEMORY_POOL 125 
+#define ZMQ_MAX_MESSAGES 126 
 
 /*  DRAFT ZMQ_NORM_MODE options                                               */
 #define ZMQ_NORM_FIXED 0

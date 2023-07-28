@@ -15,7 +15,7 @@ class v2_decoder_t ZMQ_FINAL
     : public decoder_base_t<v2_decoder_t, shared_message_memory_allocator>
 {
   public:
-    v2_decoder_t (size_t bufsize_, int64_t maxmsgsize_, bool zero_copy_, bool use_memory_pool);
+    v2_decoder_t (size_t bufsize_, int64_t maxmsgsize_, bool zero_copy_,int max_messages_, bool use_memory_pool);
     ~v2_decoder_t ();
 
     //  i_decoder interface.

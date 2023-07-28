@@ -43,9 +43,9 @@ shared_message_memory_allocator::shared_message_memory_allocator (
     _msg_content (NULL),
     _max_counters ((_max_size + msg_t::max_vsm_size - 1) / msg_t::max_vsm_size) 
 {
-    _use_memory_pool=false;//use_memory_pool;
+    _use_memory_pool=use_memory_pool;
     if(use_memory_pool){
-        _max_counters=1;        
+        _max_counters=max_messages_; 
     }
 }
 
@@ -75,7 +75,7 @@ unsigned char *shared_message_memory_allocator::allocate ()
 
     // if buf != NULL it is not used by any message so we can re-use it for the next run
     if (!_buf) {
-        std::cout<<"use memory pool"<<_use_memory_pool<<std::endl;
+        std::cout<<"use memory pool"<<_use_memory_pool<<" counters:"<<_max_counters<<std::endl;
         if(_use_memory_pool){
             size_t buffer_size;
             _buf = reusable_memory_pool.allocate(buffer_size);
@@ -143,9 +143,12 @@ void shared_message_memory_allocator::inc_ref ()
 
 void shared_message_memory_allocator::call_dec_ref (void *, void *hint_)
 {
+    
     zmq_assert (hint_);
     unsigned char *buf = static_cast<unsigned char *> (hint_);
     atomic_counter_t *c = reinterpret_cast<atomic_counter_t *> (buf);
+
+    std::cout<<"call_dec_ref"<<static_cast<void *>(hint_)<<" count: "<<c->get() <<std::endl;
 
     if (!c->sub (1)) {
         c->~atomic_counter_t ();
@@ -173,14 +176,52 @@ unsigned char *shared_message_memory_allocator::data ()
 
 
 void shared_message_memory_allocator::advance_content () {
-    if(_use_memory_pool){
-        //we disallow continuing in the same buffer
-        deallocate ();
-    }
-    else{
-        _msg_content++;  
-    }
+    msg_counter++;
+    assert(msg_counter<_max_counters); 
+    _msg_content++;        
+}
+
+// void shared_message_memory_allocator::advance_content (size_t end_of_message) {
+//     // if(_use_memory_pool){
+//     //     //we disallow continuing in the same buffer
+//     //     size_t previous_size=size();
+//     //     unsigned char *previous_data=data();
+//     //     unsigned char *previous_buf=release ();        
+//     //     allocate ();
+//     //     if(previous_size-end_of_message>0){
+//     //         std::cout<<"copying: "<<previous_size-end_of_message<<" "<<previous_size<<" "<<end_of_message<<" |";
+//     //         for(int i=0;i<previous_size-end_of_message;i++){
+//     //             if((int) (previous_data+end_of_message)[i]<32){
+//     //                 std::cout<<"X";
+//     //             }
+//     //             else{
+//     //                 std::cout<<(previous_data+end_of_message)[i];
+//     //             };
+//     //         }
+//     //         std::cout<<"|"<<std::endl;
+//     //         memcpy(data(),previous_data+end_of_message,previous_size-end_of_message); //copy to new buffer;
+//     //         resize(previous_size-end_of_message);
+//     //     }
+//     // }
+//     // else{
+//     msg_counter++;
+//     assert(msg_counter<_max_counters);
+//      _msg_content++;  
+//     // }
         
+// }
+
+
+void shared_message_memory_allocator::resize (std::size_t new_size_) { 
+    // if(_use_memory_pool){
+    //     //we disallow continuing in the same buffer
+    //     deallocate ();
+    // }
+    // else{
+        _buf_size = new_size_;   
+    // }
+
+
 }
 
 }

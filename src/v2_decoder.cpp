@@ -13,8 +13,8 @@
 
 zmq::v2_decoder_t::v2_decoder_t (size_t bufsize_,
                                  int64_t maxmsgsize_,
-                                 bool zero_copy_, bool use_memory_pool) :
-    decoder_base_t<v2_decoder_t, shared_message_memory_allocator> (bufsize_,use_memory_pool),
+                                 bool zero_copy_,int max_messages_, bool use_memory_pool) :
+    decoder_base_t<v2_decoder_t, shared_message_memory_allocator> (bufsize_,max_messages_,use_memory_pool),
     _msg_flags (0),
     _zero_copy (zero_copy_),
     _max_msg_size (maxmsgsize_)
@@ -97,6 +97,7 @@ int zmq::v2_decoder_t::size_ready (uint64_t msg_size_,
         // construct message using n bytes from the buffer as storage
         // increase buffer ref count
         // if the message will be a large message, pass a valid refcnt memory location as well
+        std::cout<<"init zcmsg size:"<<msg_size_<<std::endl;
         rc =
           _in_progress.init (const_cast<unsigned char *> (read_pos_),
                              static_cast<size_t> (msg_size_),
@@ -104,9 +105,13 @@ int zmq::v2_decoder_t::size_ready (uint64_t msg_size_,
                              allocator.buffer (), allocator.provide_content ());
 
         // For small messages, data has been copied and refcount does not have to be increased
-        if (_in_progress.is_zcmsg ()) {
-            allocator.advance_content ();
+        if (_in_progress.is_zcmsg ()) {  
+            //size_t end_of_message=static_cast<size_t> (read_pos_-allocator.data () + msg_size_ );
+            allocator.advance_content ();//end_of_message);
             allocator.inc_ref ();
+            // if(!allocator.use_memory_pool()){
+            //     allocator.inc_ref ();
+            // }
         }
     }
 
