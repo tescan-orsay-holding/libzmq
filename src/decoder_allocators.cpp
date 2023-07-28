@@ -75,7 +75,7 @@ unsigned char *shared_message_memory_allocator::allocate ()
 
     // if buf != NULL it is not used by any message so we can re-use it for the next run
     if (!_buf) {
-        std::cout<<"use memory pool"<<_use_memory_pool<<" counters:"<<_max_counters<<std::endl;
+        //std::cout<<"use memory pool"<<_use_memory_pool<<" counters:"<<_max_counters<<std::endl;
         if(_use_memory_pool){
             size_t buffer_size;
             _buf = reusable_memory_pool.allocate(buffer_size);
@@ -148,7 +148,7 @@ void shared_message_memory_allocator::call_dec_ref (void *, void *hint_)
     unsigned char *buf = static_cast<unsigned char *> (hint_);
     atomic_counter_t *c = reinterpret_cast<atomic_counter_t *> (buf);
 
-    std::cout<<"call_dec_ref"<<static_cast<void *>(hint_)<<" count: "<<c->get() <<std::endl;
+    //std::cout<<"call_dec_ref"<<static_cast<void *>(hint_)<<" count: "<<c->get() <<std::endl;
 
     if (!c->sub (1)) {
         c->~atomic_counter_t ();

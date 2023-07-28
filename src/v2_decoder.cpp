@@ -97,7 +97,7 @@ int zmq::v2_decoder_t::size_ready (uint64_t msg_size_,
         // construct message using n bytes from the buffer as storage
         // increase buffer ref count
         // if the message will be a large message, pass a valid refcnt memory location as well
-        std::cout<<"init zcmsg size:"<<msg_size_<<std::endl;
+        //std::cout<<"init zcmsg size:"<<msg_size_<<std::endl;
         rc =
           _in_progress.init (const_cast<unsigned char *> (read_pos_),
                              static_cast<size_t> (msg_size_),

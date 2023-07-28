@@ -78,20 +78,20 @@ class decoder_base_t : public i_decoder
                 std::size_t &bytes_used_) ZMQ_FINAL
     {
         bytes_used_ = 0;
-        std::cout<<"decoding: "<<size_<<" |";
-        size_t sz=size_;
-        if(sz>1000){
-            sz=1000;
-        }
-        for(int i=0;i<sz;i++){
-            if((int) *(data_+i)<32){
-                continue;//    std::cout<<"X";
-            }
-            else{
-                std::cout<<*(data_+i);
-            };
-        }
-        std::cout<<"|"<<std::endl;
+        //std::cout<<"decoding: "<<size_<<" |";
+        // size_t sz=size_;
+        // if(sz>1000){
+        //     sz=1000;
+        // }
+        // for(int i=0;i<sz;i++){
+        //     if((int) *(data_+i)<32){
+        //         continue;//    std::cout<<"X";
+        //     }
+        //     else{
+        //         std::cout<<*(data_+i);
+        //     };
+        // }
+        // std::cout<<"|"<<std::endl;
             
 
         //  In case of zero-copy simply adjust the pointers, no copying
@@ -104,7 +104,7 @@ class decoder_base_t : public i_decoder
             bytes_used_ = size_;
 
             while (!_to_read) {
-                std::cout<<"reading"<<size_<<" "<< _to_read<<std::endl;
+                //std::cout<<"reading"<<size_<<" "<< _to_read<<std::endl;
                 const int rc =
                   (static_cast<T *> (this)->*_next) (data_ + bytes_used_);
                 if (rc != 0)
@@ -119,7 +119,7 @@ class decoder_base_t : public i_decoder
             // Only copy when destination address is different from the
             // current address in the buffer.
             if (_read_pos != data_ + bytes_used_) {
-                std::cout<<"memcpy"<<bytes_used_<<" sz"<<to_copy<<std::endl;
+                //std::cout<<"memcpy"<<bytes_used_<<" sz"<<to_copy<<std::endl;
                 memcpy (_read_pos, data_ + bytes_used_, to_copy);
             }
 
@@ -130,7 +130,7 @@ class decoder_base_t : public i_decoder
             //  If none is available, return.
             while (_to_read == 0) {
                 // pass current address in the buffer
-                std::cout<<"msg fill in"<<size_<<" "<< _to_read<<std::endl;
+                //std::cout<<"msg fill in"<<size_<<" "<< _to_read<<std::endl;
                 const int rc =
                   (static_cast<T *> (this)->*_next) (data_ + bytes_used_);
                 if (rc != 0)
@@ -142,7 +142,7 @@ class decoder_base_t : public i_decoder
     }
     void resize_buffer (std::size_t new_size_)
     {
-        std::cout<<"resize "<<new_size_<<std::endl;
+        //std::cout<<"resize "<<new_size_<<std::endl;
         _allocator.resize (new_size_);
     }
 

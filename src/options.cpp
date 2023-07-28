@@ -306,7 +306,7 @@ int zmq::options_t::setsockopt (int option_,
     bool malformed = true; //  Did caller pass a bad option value?
 #endif
 
-    std::cout<<"setting option"<<optval_<<" "<<optvallen_<<std::endl;
+    //<<"setting option"<<optval_<<" "<<optvallen_<<std::endl;
 
     switch (option_) {
         case ZMQ_SNDHWM:
@@ -778,7 +778,7 @@ int zmq::options_t::setsockopt (int option_,
 
         case ZMQ_USE_RECV_MEMORY_POOL:
             if (is_int) {
-                std::cout<<"setting recv mem"<<value;
+                //std::cout<<"setting recv mem"<<value;
                 use_recv_memory_pool = value>0;
                 return 0;
             }
