@@ -67,6 +67,7 @@ int zmq::v2_decoder_t::eight_byte_size_ready (unsigned char const *read_from_)
 int zmq::v2_decoder_t::size_ready (uint64_t msg_size_,
                                    unsigned char const *read_pos_)
 {
+    std::cout<<"SIZE READY"<<msg_size_<<" "<< reinterpret_cast<const void *>(read_pos_)<<std::endl;
     //  Message size must not exceed the maximum allowed size.
     if (_max_msg_size >= 0)
         if (unlikely (msg_size_ > static_cast<uint64_t> (_max_msg_size))) {
@@ -86,18 +87,21 @@ int zmq::v2_decoder_t::size_ready (uint64_t msg_size_,
     // the current message can exceed the current buffer. We have to copy the buffer
     // data into a new message and complete it in the next receive.
 
+    bool buffer_overflow=false;
+
     shared_message_memory_allocator &allocator = get_allocator ();
     if (unlikely (!_zero_copy
                   || msg_size_ > static_cast<size_t> (
                        allocator.data () + allocator.size () - read_pos_))) {
         // a new message has started, but the size would exceed the pre-allocated arena
         // this happens every time when a message does not fit completely into the buffer
+        std::cout<<"+++INIT MSG ALLOCATION:"<<((int) msg_size_)<<std::endl;
         rc = _in_progress.init_size (static_cast<size_t> (msg_size_));
     } else {
         // construct message using n bytes from the buffer as storage
         // increase buffer ref count
         // if the message will be a large message, pass a valid refcnt memory location as well
-        //std::cout<<"init zcmsg size:"<<msg_size_<<std::endl;
+        std::cout<<"+++INIT ZCMSG SIZE:"<<msg_size_<<" pos:"<<reinterpret_cast<const void *>(read_pos_)<<std::endl;
         rc =
           _in_progress.init (const_cast<unsigned char *> (read_pos_),
                              static_cast<size_t> (msg_size_),
@@ -106,12 +110,16 @@ int zmq::v2_decoder_t::size_ready (uint64_t msg_size_,
 
         // For small messages, data has been copied and refcount does not have to be increased
         if (_in_progress.is_zcmsg ()) {  
-            //size_t end_of_message=static_cast<size_t> (read_pos_-allocator.data () + msg_size_ );
-            allocator.advance_content ();//end_of_message);
-            allocator.inc_ref ();
-            // if(!allocator.use_memory_pool()){
-            //     allocator.inc_ref ();
-            // }
+            std::cout<<"end of message read pos:"<<reinterpret_cast<const void *>(read_pos_)<<" data:"<<static_cast<void *>(allocator.data ())<<std::endl;
+            size_t end_of_message=static_cast<size_t> (read_pos_-allocator.data () + msg_size_ );
+            bool res=allocator.advance_content (end_of_message);
+            buffer_overflow=!res;
+            if(res){
+                allocator.inc_ref (); //if the message content space did not overflew
+            }
+            else{
+                
+            }
         }
     }
 
@@ -130,8 +138,22 @@ int zmq::v2_decoder_t::size_ready (uint64_t msg_size_,
     // or
     // to the current start address in the buffer because the message
     // was constructed to use n bytes from the address passed as argument
-    next_step (_in_progress.data (), _in_progress.size (),
+
+    if(buffer_overflow){
+        // data are in the next buffer
+        std::cout<<"next BUFFER:"<<static_cast<void *>(allocator.data ())<<std::endl;
+        next_step (allocator.data (), _in_progress.size (),  &v2_decoder_t::message_ready);
+        return 2;
+    }
+    else{
+        std::cout<<"next MSG:"<<_in_progress.data ()<<std::endl;
+        next_step (_in_progress.data (), _in_progress.size (),
                &v2_decoder_t::message_ready);
+
+    }
+
+    
+    
 
     return 0;
 }

@@ -3,6 +3,7 @@
 #include "precompiled.hpp"
 #include <stdlib.h>
 #include <string.h>
+#include <iostream>
 
 #include "raw_decoder.hpp"
 #include "err.hpp"
@@ -21,8 +22,9 @@ zmq::raw_decoder_t::~raw_decoder_t ()
 
 void zmq::raw_decoder_t::get_buffer (unsigned char **data_, size_t *size_)
 {
+    
     *data_ = _allocator.allocate ();
-    *size_ = _allocator.size ();
+    *size_ = _allocator.size ();    
 }
 
 int zmq::raw_decoder_t::decode (const uint8_t *data_,

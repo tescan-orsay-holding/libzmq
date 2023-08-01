@@ -115,6 +115,7 @@ int zmq::msg_t::init_external_storage (content_t *content_,
                                        msg_free_fn *ffn_,
                                        void *hint_)
 {
+    std::cout<<"init_external_storage"<<std::endl;
     zmq_assert (NULL != data_);
     zmq_assert (NULL != content_);
 
@@ -376,6 +377,7 @@ void *zmq::msg_t::data ()
         case type_cmsg:
             return _u.cmsg.data;
         case type_zclmsg:
+            std::cout<<"zclmsg data: "<<_u.zclmsg.content->data<<std::endl;
             return _u.zclmsg.content->data;
         default:
             zmq_assert (false);

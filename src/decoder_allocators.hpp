@@ -99,7 +99,7 @@ class shared_message_memory_allocator
 
     zmq::msg_t::content_t *provide_content () { return _msg_content; }
 
-    // void advance_content (size_t end_of_message);
+    bool advance_content (size_t end_of_message);
     void advance_content ();
 
     size_t use_memory_pool(){return _use_memory_pool;};

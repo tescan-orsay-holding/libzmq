@@ -58,6 +58,7 @@ class decoder_base_t : public i_decoder
         //  other engines running in the same I/O thread for excessive
         //  amounts of time.
         if (_to_read >= _allocator.size ()) {
+            std::cout<<"filling in msg "<<_to_read<<"/"<<_allocator.size ()<<std::endl;
             *data_ = _read_pos;
             *size_ = _to_read;
             return;
@@ -65,6 +66,7 @@ class decoder_base_t : public i_decoder
 
         *data_ = _buf;
         *size_ = _allocator.size ();
+        //std::cout<<"get_buffer "<<static_cast<void *>(*data_)<<" "<<*data_<<std::endl;
     }
 
     //  Processes the data in the buffer previously allocated using
@@ -78,6 +80,7 @@ class decoder_base_t : public i_decoder
                 std::size_t &bytes_used_) ZMQ_FINAL
     {
         bytes_used_ = 0;
+        std::cout<<"decoding:"<<size_<<" "<<bytes_used_<<" "<< reinterpret_cast<const void *>(data_)<< " -> "<<reinterpret_cast<const void *>(_read_pos)<<std::endl;
         //std::cout<<"decoding: "<<size_<<" |";
         // size_t sz=size_;
         // if(sz>1000){
@@ -98,13 +101,14 @@ class decoder_base_t : public i_decoder
         //  is required. Also, run the state machine in case all the data
         //  were processed.
         if (data_ == _read_pos) {
+            std::cout<<"CORECT NO COPY"<<std::endl;
             zmq_assert (size_ <= _to_read);
             _read_pos += size_;
             _to_read -= size_;
             bytes_used_ = size_;
 
             while (!_to_read) {
-                //std::cout<<"reading"<<size_<<" "<< _to_read<<std::endl;
+                std::cout<<"NEXT reading: "<<bytes_used_<<std::endl;
                 const int rc =
                   (static_cast<T *> (this)->*_next) (data_ + bytes_used_);
                 if (rc != 0)
@@ -119,9 +123,13 @@ class decoder_base_t : public i_decoder
             // Only copy when destination address is different from the
             // current address in the buffer.
             if (_read_pos != data_ + bytes_used_) {
-                //std::cout<<"memcpy"<<bytes_used_<<" sz"<<to_copy<<std::endl;
+                std::cout<<"!!!!COPYING!!!"<<reinterpret_cast<const void *>(data_ + bytes_used_)<<"->"<<static_cast<void *>(_read_pos)<<" sz:"<<to_copy<<std::endl;
                 memcpy (_read_pos, data_ + bytes_used_, to_copy);
             }
+            else{
+                std::cout<<"!!!!NO COPY!!!"<<std::endl;
+            }
+
 
             _read_pos += to_copy;
             _to_read -= to_copy;
@@ -133,6 +141,7 @@ class decoder_base_t : public i_decoder
                 //std::cout<<"msg fill in"<<size_<<" "<< _to_read<<std::endl;
                 const int rc =
                   (static_cast<T *> (this)->*_next) (data_ + bytes_used_);
+                std::cout<<"step done"<<rc<<"to read:"<<_to_read<<std::endl;
                 if (rc != 0)
                     return rc;
             }
@@ -155,6 +164,7 @@ class decoder_base_t : public i_decoder
     //  from the buffer and schedule next state machine action.
     void next_step (void *read_pos_, std::size_t to_read_, step_t next_)
     {
+        std::cout<<"NEXT STEP "<<to_read_<<" "<<next_<<" "<<read_pos_<<std::endl;
         _read_pos = static_cast<unsigned char *> (read_pos_);
         _to_read = to_read_;
         _next = next_;

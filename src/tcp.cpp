@@ -6,6 +6,7 @@
 #include "tcp.hpp"
 #include "err.hpp"
 #include "options.hpp"
+#include <iostream>
 
 #if !defined ZMQ_HAVE_WINDOWS
 #include <fcntl.h>

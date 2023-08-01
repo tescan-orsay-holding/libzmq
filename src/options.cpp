@@ -221,7 +221,7 @@ zmq::options_t::options_t () :
     multicast_loop (true),
     in_batch_size (8192),
     use_recv_memory_pool (true), //in batcch size will be given by memory pool
-    max_messages (100), //used for memory pool
+    max_messages (1), //used for memory pool
     out_batch_size (8192),
     zero_copy (true),
     router_notify (0),
