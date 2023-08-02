@@ -115,7 +115,7 @@ int zmq::msg_t::init_external_storage (content_t *content_,
                                        msg_free_fn *ffn_,
                                        void *hint_)
 {
-    std::cout<<"init_external_storage"<<std::endl;
+    //std::cout<<"init_external_storage"<<std::endl;
     zmq_assert (NULL != data_);
     zmq_assert (NULL != content_);
 
@@ -271,12 +271,15 @@ int zmq::msg_t::close ()
 
         //  If the content is not shared, or if it is shared and the reference
         //  count has dropped to zero, deallocate it.
+
+        // std::cout<<"CLOSE: "<<_u.zclmsg.content->refcnt.get()<<" "<<(int) (static_cast<uint8_t*>(_u.zclmsg.content->hint))[0]<<(int) (static_cast<uint8_t*>(_u.zclmsg.content->hint))[1]<<
+        // " "<<static_cast<void*>(_u.zclmsg.content->hint)<<std::endl;
+
         if (!(_u.zclmsg.flags & msg_t::shared)
             || !_u.zclmsg.content->refcnt.sub (1)) {
             //  We used "placement new" operator to initialize the reference
             //  counter so we call the destructor explicitly now.
             _u.zclmsg.content->refcnt.~atomic_counter_t ();
-
             _u.zclmsg.content->ffn (_u.zclmsg.content->data,
                                     _u.zclmsg.content->hint);
         }
@@ -377,13 +380,13 @@ void *zmq::msg_t::data ()
         case type_cmsg:
             return _u.cmsg.data;
         case type_zclmsg:
-            std::cout<<"zclmsg data: "<<_u.zclmsg.content->data<<std::endl;
             return _u.zclmsg.content->data;
         default:
             zmq_assert (false);
             return NULL;
     }
 }
+
 
 size_t zmq::msg_t::size () const
 {

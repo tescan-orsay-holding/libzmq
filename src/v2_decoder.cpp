@@ -11,7 +11,13 @@
 #include "wire.hpp"
 #include "err.hpp"
 
-zmq::v2_decoder_t::v2_decoder_t (size_t bufsize_,
+#include "reusable_memory_pool.hpp"
+
+namespace zmq{
+
+extern ReusableMemoryPool reusable_memory_pool;
+
+v2_decoder_t::v2_decoder_t (size_t bufsize_,
                                  int64_t maxmsgsize_,
                                  bool zero_copy_,int max_messages_, bool use_memory_pool) :
     decoder_base_t<v2_decoder_t, shared_message_memory_allocator> (bufsize_,max_messages_,use_memory_pool),
@@ -26,13 +32,13 @@ zmq::v2_decoder_t::v2_decoder_t (size_t bufsize_,
     next_step (_tmpbuf, 1, &v2_decoder_t::flags_ready);
 }
 
-zmq::v2_decoder_t::~v2_decoder_t ()
+v2_decoder_t::~v2_decoder_t ()
 {
     const int rc = _in_progress.close ();
     errno_assert (rc == 0);
 }
 
-int zmq::v2_decoder_t::flags_ready (unsigned char const *)
+int v2_decoder_t::flags_ready (unsigned char const *)
 {
     _msg_flags = 0;
     if (_tmpbuf[0] & v2_protocol_t::more_flag)
@@ -50,12 +56,12 @@ int zmq::v2_decoder_t::flags_ready (unsigned char const *)
     return 0;
 }
 
-int zmq::v2_decoder_t::one_byte_size_ready (unsigned char const *read_from_)
+int v2_decoder_t::one_byte_size_ready (unsigned char const *read_from_)
 {
     return size_ready (_tmpbuf[0], read_from_);
 }
 
-int zmq::v2_decoder_t::eight_byte_size_ready (unsigned char const *read_from_)
+int v2_decoder_t::eight_byte_size_ready (unsigned char const *read_from_)
 {
     //  The payload size is encoded as 64-bit unsigned integer.
     //  The most significant byte comes first.
@@ -64,10 +70,10 @@ int zmq::v2_decoder_t::eight_byte_size_ready (unsigned char const *read_from_)
     return size_ready (msg_size, read_from_);
 }
 
-int zmq::v2_decoder_t::size_ready (uint64_t msg_size_,
+int v2_decoder_t::size_ready (uint64_t msg_size_,
                                    unsigned char const *read_pos_)
 {
-    std::cout<<"SIZE READY"<<msg_size_<<" "<< reinterpret_cast<const void *>(read_pos_)<<std::endl;
+    //std::cout<<"SIZE READY"<<msg_size_<<" "<< reinterpret_cast<const void *>(read_pos_)<<std::endl;
     //  Message size must not exceed the maximum allowed size.
     if (_max_msg_size >= 0)
         if (unlikely (msg_size_ > static_cast<uint64_t> (_max_msg_size))) {
@@ -84,42 +90,84 @@ int zmq::v2_decoder_t::size_ready (uint64_t msg_size_,
     int rc = _in_progress.close ();
     assert (rc == 0);
 
-    // the current message can exceed the current buffer. We have to copy the buffer
-    // data into a new message and complete it in the next receive.
+    // the current message can exceed the current buffer. In that case we copy the remaining data in next recieve buffer
 
-    bool buffer_overflow=false;
-
+    bool cross_message=false;
     shared_message_memory_allocator &allocator = get_allocator ();
     if (unlikely (!_zero_copy
                   || msg_size_ > static_cast<size_t> (
                        allocator.data () + allocator.size () - read_pos_))) {
         // a new message has started, but the size would exceed the pre-allocated arena
         // this happens every time when a message does not fit completely into the buffer
-        std::cout<<"+++INIT MSG ALLOCATION:"<<((int) msg_size_)<<std::endl;
-        rc = _in_progress.init_size (static_cast<size_t> (msg_size_));
+
+        if(allocator.use_memory_pool() && msg_size_<allocator.max_size()){
+            //use the shared allocator pool for the message;
+
+            //std::cout<<"new allocation"<<std::endl;
+
+            size_t remaining=static_cast<size_t> (allocator.data () + allocator.size () - read_pos_);
+
+            unsigned char *previous_buf=allocator.release (); 
+            allocator.allocate();
+
+
+            
+
+            if(remaining>0){
+                //std::cout<<"copy to new block "<<remaining<<" "<<static_cast<void *>(allocator.data())<<" "<<reinterpret_cast<const void *>(read_pos_)<<std::endl;
+                //copy data to the new buffer;
+                memcpy(allocator.data(),read_pos_,remaining);
+                _old_pos=allocator.data();
+                _old_to_process=remaining;
+            } 
+
+            //deallocate after copying
+            atomic_counter_t *c = reinterpret_cast<atomic_counter_t *> (previous_buf);
+            if (previous_buf && !c->sub (1)) {
+                c->~atomic_counter_t ();
+                if(reusable_memory_pool.enabled){
+                    reusable_memory_pool.deallocate(previous_buf);
+                }
+                else{
+                    std::free (previous_buf);
+                }
+            }
+
+
+
+            rc =
+            _in_progress.init (const_cast<unsigned char *> (allocator.data()),
+                                static_cast<size_t> (msg_size_),
+                                shared_message_memory_allocator::call_dec_ref,
+                                allocator.buffer (), allocator.provide_content ()); 
+
+            cross_message=true;;
+            //std::cout<<"NEW CROSS MESSAGE "<<msg_size_<<" "<<static_cast<void *>(allocator.buffer())<<std::endl;
+            if (_in_progress.is_zcmsg ()){  
+                allocator.advance_content ();
+                allocator.inc_ref ();
+            }
+
+        }
+        else{
+            rc = _in_progress.init_size (static_cast<size_t> (msg_size_));
+        }
+        
     } else {
         // construct message using n bytes from the buffer as storage
         // increase buffer ref count
         // if the message will be a large message, pass a valid refcnt memory location as well
-        std::cout<<"+++INIT ZCMSG SIZE:"<<msg_size_<<" pos:"<<reinterpret_cast<const void *>(read_pos_)<<std::endl;
+        //std::cout<<"+++INIT ZCMSG SIZE:"<<msg_size_<<" pos:"<<reinterpret_cast<const void *>(read_pos_)<<std::endl;
         rc =
           _in_progress.init (const_cast<unsigned char *> (read_pos_),
                              static_cast<size_t> (msg_size_),
                              shared_message_memory_allocator::call_dec_ref,
                              allocator.buffer (), allocator.provide_content ());
-
+        //std::cout<<"NEW MESSAGE "<<msg_size_<<" "<<static_cast<void *>(allocator.buffer())<<std::endl;
         // For small messages, data has been copied and refcount does not have to be increased
         if (_in_progress.is_zcmsg ()) {  
-            std::cout<<"end of message read pos:"<<reinterpret_cast<const void *>(read_pos_)<<" data:"<<static_cast<void *>(allocator.data ())<<std::endl;
-            size_t end_of_message=static_cast<size_t> (read_pos_-allocator.data () + msg_size_ );
-            bool res=allocator.advance_content (end_of_message);
-            buffer_overflow=!res;
-            if(res){
-                allocator.inc_ref (); //if the message content space did not overflew
-            }
-            else{
-                
-            }
+            allocator.advance_content ();
+            allocator.inc_ref ();
         }
     }
 
@@ -139,29 +187,22 @@ int zmq::v2_decoder_t::size_ready (uint64_t msg_size_,
     // to the current start address in the buffer because the message
     // was constructed to use n bytes from the address passed as argument
 
-    if(buffer_overflow){
-        // data are in the next buffer
-        std::cout<<"next BUFFER:"<<static_cast<void *>(allocator.data ())<<std::endl;
-        next_step (allocator.data (), _in_progress.size (),  &v2_decoder_t::message_ready);
+    next_step (_in_progress.data (), _in_progress.size (),
+            &v2_decoder_t::message_ready);
+
+    
+    if(cross_message){
         return 2;
     }
-    else{
-        std::cout<<"next MSG:"<<_in_progress.data ()<<std::endl;
-        next_step (_in_progress.data (), _in_progress.size (),
-               &v2_decoder_t::message_ready);
-
-    }
-
-    
-    
-
     return 0;
 }
 
-int zmq::v2_decoder_t::message_ready (unsigned char const *)
+int v2_decoder_t::message_ready (unsigned char const *)
 {
     //  Message is completely read. Signal this to the caller
     //  and prepare to decode next message.
     next_step (_tmpbuf, 1, &v2_decoder_t::flags_ready);
     return 1;
+}
+
 }

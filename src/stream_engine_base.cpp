@@ -259,24 +259,24 @@ bool zmq::stream_engine_base_t::in_event_internal ()
         size_t bufsize = 0;
          
         _decoder->get_buffer (&_inpos, &bufsize);
-        std::cout<<"got buffer "<<bufsize<<" "<<static_cast<void *>(_inpos)<<std::endl;
+        //std::cout<<"got buffer "<<bufsize<<" "<<static_cast<void *>(_inpos)<<std::endl;
         
 
         const int rc = read (_inpos, bufsize);
 
-        std::cout<<"read: "<<rc<<"/"<<bufsize<<" "<<static_cast<void *>(_inpos)<<std::endl;
+        //std::cout<<"read: "<<rc<<"/"<<bufsize<<" "<<static_cast<void *>(_inpos)<<std::endl;
 
-        std::cout<<"  |";
-        for(int i=0;i<rc;i++){
-            if(_inpos[i]<32){
-                std::cout<<"_";
-            }
-            else{
-                std::cout<<_inpos[i];
-            }
+        // std::cout<<"  |";
+        // for(int i=0;i<rc;i++){
+        //     if(_inpos[i]<32){
+        //         std::cout<<"_";
+        //     }
+        //     else{
+        //         std::cout<<_inpos[i];
+        //     }
             
-        }
-        std::cout<<"|"<<std::endl;
+        // }
+        // std::cout<<"|"<<std::endl;
 
         if (rc == -1) {
             if (errno != EAGAIN) {
@@ -296,7 +296,7 @@ bool zmq::stream_engine_base_t::in_event_internal ()
     size_t processed = 0;
 
     while (_insize > 0) {
-        std::cout<<"decode: "<<processed<<"/"<<_insize<<" "<<static_cast<void *>(_inpos)<<std::endl;
+        //std::cout<<"decode: "<<processed<<"/"<<_insize<<" "<<static_cast<void *>(_inpos)<<std::endl;
 
         rc = _decoder->decode (_inpos, _insize, processed);
         zmq_assert (processed <= _insize);
@@ -304,6 +304,21 @@ bool zmq::stream_engine_base_t::in_event_internal ()
         _insize -= processed;
         if (rc == 0 || rc == -1 || rc == 2)
             break;
+
+        // std::cout<<"NEW MESSAGE: "<<(*_decoder->msg()).size()<<" |";
+        // for(int i=0;i<(*_decoder->msg()).size();i++){  
+        //     char * pos=((char *) (*_decoder->msg()).data());
+        //     if(pos[i]<32){
+        //         std::cout<<"_";
+        //     }
+        //     else{
+        //         std::cout<<pos[i];
+        //     }
+            
+        // }
+        // std::cout<<std::endl;
+
+
         rc = (this->*_process_msg) (_decoder->msg ());
         if (rc == -1)
             break;

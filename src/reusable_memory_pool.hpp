@@ -15,7 +15,7 @@ namespace zmq
 {
 class ReusableMemoryPool{
 
-    size_t buffer_size = 500; // this can be changed to while still presering previous items
+    size_t buffer_size = 350'000; // this can be changed to while still presering previous items
 
     std::unordered_map<size_t,std::vector<unsigned char*>> buffers;
     std::unordered_map<size_t,std::vector<unsigned int>> empty_slots;
@@ -75,7 +75,7 @@ public:
             buffers[size].push_back(buffer);
             buff_to_index_map[size].insert({buffer,buffers[size].size()-1});
             
-            std::cout<<"allocate "<<static_cast<void *>(buffer)<<std::endl;
+            std::cout<<"allocate "<<buffers[size].size()<<" "<<static_cast<void *>(buffer)<<std::endl;
             access_mutex.unlock();
             return buffer;
         }
@@ -91,7 +91,7 @@ public:
                 buffers[size][index]=buffer;
                 buff_to_index_map[size].insert({buffer,index});
             }
-            std::cout<<"reallocate "<<static_cast<void *>(buffers[size][index])<<std::endl;
+            //std::cout<<"reallocate "<<buffers[size].size()<<" "<<static_cast<void *>(buffers[size][index])<<std::endl;
             access_mutex.unlock();            
             return buffers[size][index];
         }
@@ -101,7 +101,7 @@ public:
 
     bool deallocate(unsigned char* buffer){
         access_mutex.lock();   
-        std::cout<<"deallocate "<<static_cast<void *>(buffer)<<std::endl;     
+        //std::cout<<"deallocate "<<static_cast<void *>(buffer)<<std::endl;     
         bool found=false;
         for (const auto& it0 : buff_to_index_map){
             auto it=it0.second.find(buffer);

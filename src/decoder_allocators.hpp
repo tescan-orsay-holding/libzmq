@@ -35,6 +35,7 @@ class c_single_allocator
     void deallocate () {}
 
     std::size_t size () const { return _buf_size; }
+    unsigned char *data () { return _buf; }
 
     //  This buffer is fixed, size must not be changed
     void resize (std::size_t new_size_) { LIBZMQ_UNUSED (new_size_); }
@@ -89,6 +90,8 @@ class shared_message_memory_allocator
 
     std::size_t size () const;
 
+    std::size_t max_size(){return _max_size;};
+
     // Return pointer to the first message data byte.
     unsigned char *data ();
 
@@ -96,6 +99,8 @@ class shared_message_memory_allocator
     unsigned char *buffer () { return _buf; }
 
     void resize (std::size_t new_size_);
+
+
 
     zmq::msg_t::content_t *provide_content () { return _msg_content; }
 
