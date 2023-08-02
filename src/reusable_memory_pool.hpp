@@ -75,7 +75,7 @@ public:
             buffers[size].push_back(buffer);
             buff_to_index_map[size].insert({buffer,buffers[size].size()-1});
             
-            std::cout<<"allocate "<<buffers[size].size()<<" "<<static_cast<void *>(buffer)<<std::endl;
+            //std::cout<<"allocate "<<buffers[size].size()<<" "<<static_cast<void *>(buffer)<<std::endl;
             access_mutex.unlock();
             return buffer;
         }
