@@ -1,11 +1,12 @@
 # CMake build script for ZeroMQ
-project(ZeroMQ)
 
-if(${CMAKE_SYSTEM_NAME} STREQUAL Darwin)
+if("${CMAKE_SYSTEM_NAME}" STREQUAL Darwin)
   cmake_minimum_required(VERSION 3.0.2)
 else()
   cmake_minimum_required(VERSION 2.8.12)
 endif()
+
+project(ZeroMQ)
 
 include(CheckIncludeFiles)
 include(CheckCCompilerFlag)
@@ -1340,6 +1341,14 @@ if(MSVC)
       set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /LTCG")
       set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /LTCG")
       set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} /LTCG")
+    endif()
+
+    check_cxx_compiler_flag("/arch:AVX2" COMPILER_SUPPORTS_AVX2)
+    if(COMPILER_SUPPORTS_AVX2)
+      option(ENABLE_AVX2_AUTOOPTIMIZATION "Enable AVX2 autooptimization" ON)
+      if(ENABLE_AVX2_AUTOOPTIMIZATION)
+        add_compile_options(/arch:AVX2)
+      endif()
     endif()
 
     add_library(libzmq SHARED ${sources} ${public_headers} ${html-docs} ${readme-docs}
